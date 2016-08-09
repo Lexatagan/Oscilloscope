@@ -11,13 +11,8 @@ DisplayWidget::DisplayWidget(QWidget *parent) : QWidget(parent)
       dataArray[x][y] = rand();*/
   phosphorValue = 40;
   fpsTimer = new QTimer;
-  QObject::connect(fpsTimer, SIGNAL(timeout()), this, SLOT(fpsCount()));
+  QObject::connect(fpsTimer, SIGNAL(timeout()), this, SLOT(counter()));
   fpsTimer->start(1000);
-
-  //decTimer = new QTimer;
-  //QObject::connect(decTimer, SIGNAL(timeout()), this, SLOT(digiP()));
-  //decTimer->start(50);
-
 
 
   update();
@@ -35,7 +30,7 @@ void DisplayWidget::paintEvent(QPaintEvent * /* event */)
     QPoint(90, 70)
   };*/
 
-  QImage *img = new QImage(1000, 400, QImage::Format_RGB32);
+  QImage *img = new QImage(DISPLAY_WIDTH, DISPLAY_HEIGHT, QImage::Format_RGB32);
 
   for (int x = 0; x < 1000; x++)
     for (int y = 0; y < 400; y++)
@@ -73,34 +68,12 @@ void DisplayWidget::paintEvent(QPaintEvent * /* event */)
   //painter.setBrush(Qt::NoBrush);
   //painter.drawRect(QRect(0, 0, width() - 1, height() - 1));
   painter.setPen(0xFFFFFF);
-  painter.drawText(QPoint(501, 300), "FPS -  " + QString().setNum(fpsValue, 10));
-}
-
-void DisplayWidget::fpsCount()
-{
-  fpsValue = fpsCounter;
-  fpsCounter = 0;
+  painter.drawText(QPoint(921, 10), "FPS -  " + QString().setNum(fpsValue, 10));
+  painter.drawText(QPoint(921, 20), "oscPS -  " + QString().setNum(oscValue, 10));
 }
 
 void DisplayWidget::refresh()
 {
-  float add = 0;
-  int t;
-  int y, z;
-  for (int x = 0; x < 1000; x++)
-  {
-    add += ((float)(qrand() % 20 - 10)) / 1000;
-    y = (int) (200 + 100 * (sin((float)x / 100 - add)));
-    videoBuffer[x][y] = 255;
-    t = qrand() % 5000;
-    if (t == 0)
-    {
-      t = 50 + qrand() % 50;
-      for (z = y; z < y + t; z++)
-        videoBuffer[x][z] = 255;
-    }
-  }
-
   update();
 }
 
@@ -115,14 +88,59 @@ void DisplayWidget::digiP()
     }
 }
 
-//void
-
-void DisplayWidget::setPhosphorValue(char val)
+void DisplayWidget::setPhosphorValue(int val)
 {
+  //qDebug() << val;
   phosphorValue = val;
 }
 
 char DisplayWidget::getPhosphorValue()
 {
   return phosphorValue;
+}
+
+void DisplayWidget::testSignal()
+{
+  float add = 0;
+  int t;
+  int y, z;
+
+  for (int x = 0; x < 1000; x++)
+  {
+    add += ((float)(qrand() % 20 - 10)) / 1000;
+    y = (int) (200 + 100 * (sin((float)x / 100 - add)));
+    videoBuffer[x][y] = 255;
+    t = qrand() % 500000;
+    if (t == 0)
+    {
+      t = 50 + qrand() % 50;
+      for (z = y; z < y + t; z++)
+        videoBuffer[x][z] = 255;
+    }
+  }
+  countOsc();
+}
+
+
+void DisplayWidget::countOsc()
+{
+  oscCounter++;
+}
+
+void DisplayWidget::counter()
+{
+  oscValue = oscCounter;
+  oscCounter = 0;
+  fpsValue = fpsCounter;
+  fpsCounter = 0;
+}
+
+QSize DisplayWidget::sizeHint() const
+{
+  return QSize(1000, 400);
+}
+
+QSize DisplayWidget::minimumSizeHint() const
+{
+  return QSize(1000, 400);
 }

@@ -9,19 +9,32 @@
 class DisplayWidget : public QWidget
 {
   Q_OBJECT
+private:
+  enum TChannel{
+    channelA,
+    channelB
+  };
+
 public:
   explicit DisplayWidget(QWidget *parent = 0);
-
-  int videoBuffer[1000][400];
-  QImage vBuffer;
+  unsigned int videoBuffer[DISPLAY_WIDTH][DISPLAY_HEIGHT];
   int fpsValue;
   int oscValue;
+  void array2VideoBuffer(unsigned int *data, TChannel channel);
+  void testSignal1(unsigned int *data);
+  void testSignal2(unsigned int *data);
   QSize sizeHint() const;
   QSize minimumSizeHint() const;
   char getPhosphorValue();
 
-protected:
-  QTimer *fpsTimer;
+private:
+  struct TRgb{
+    unsigned char blue;
+    unsigned char green;
+    unsigned char red;
+  };
+
+  QTimer *counterTimer;
   QTimer *decTimer;
   int fpsCounter;
   int oscCounter;

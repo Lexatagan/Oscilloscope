@@ -6,34 +6,26 @@
 
 DisplayWidget::DisplayWidget(QWidget *parent) : QWidget(parent)
 {
-  /*for (int x = 0; x < 1000; x++)
-    for (int y = 0; y < 400; y++)
-      dataArray[x][y] = rand();*/
-  phosphorValue = 40;
-  fpsTimer = new QTimer;
-  QObject::connect(fpsTimer, SIGNAL(timeout()), this, SLOT(counter()));
-  fpsTimer->start(1000);
+  for (int x = 0; x < DISPLAY_WIDTH; x++)
+    for (int y = 0; y < DISPLAY_HEIGHT; y++)
+      videoBuffer[x][y] = 0;
+  phosphorValue = 0;
 
+  counterTimer = new QTimer;
+  QObject::connect(counterTimer, SIGNAL(timeout()), this, SLOT(counter()));
+  counterTimer->start(1000);
 
   update();
 }
 
-void DisplayWidget::paintEvent(QPaintEvent * /* event */)
+void DisplayWidget::paintEvent(QPaintEvent *)
 {
   digiP();
   fpsCounter++;
-  /*static const QPoint points[4] =
-  {
-    QPoint(10, 80),
-    QPoint(20, 10),
-    QPoint(80, 30),
-    QPoint(90, 70)
-  };*/
-
   QImage *img = new QImage(DISPLAY_WIDTH, DISPLAY_HEIGHT, QImage::Format_RGB32);
 
-  for (int x = 0; x < 1000; x++)
-    for (int y = 0; y < 400; y++)
+  for (int x = 0; x < DISPLAY_WIDTH; x++)
+    for (int y = 0; y < DISPLAY_HEIGHT; y++)
       img->setPixel(x, y, videoBuffer[x][y]);
 
   QPainter painter(this);
@@ -79,18 +71,19 @@ void DisplayWidget::refresh()
 
 void DisplayWidget::digiP()
 {
-  for (int x = 0; x < 1000; x++)
-    for (int y = 0; y < 400; y++)
+  TRgb *pointBuffer;
+  for (int x = 0; x < DISPLAY_WIDTH; x++)
+    for (int y = 0; y < DISPLAY_HEIGHT; y++)
     {
-      videoBuffer[x][y] -= phosphorValue;
-      if (videoBuffer[x][y] < 0)
-        videoBuffer[x][y] = 0;
+      pointBuffer = (TRgb*)(&videoBuffer[x][y]);
+      pointBuffer->red = (pointBuffer->red > phosphorValue ? pointBuffer->red - phosphorValue: 0);
+      pointBuffer->green = (pointBuffer->green > phosphorValue ? pointBuffer->green - phosphorValue: 0);
+      //pointBuffer->blue = (pointBuffer->blue > phosphorValue ? pointBuffer->blue - phosphorValue: 0);
     }
 }
 
 void DisplayWidget::setPhosphorValue(int val)
 {
-  //qDebug() << val;
   phosphorValue = val;
 }
 
@@ -101,23 +94,11 @@ char DisplayWidget::getPhosphorValue()
 
 void DisplayWidget::testSignal()
 {
-  float add = 0;
-  int t;
-  int y, z;
-
-  for (int x = 0; x < 1000; x++)
-  {
-    add += ((float)(qrand() % 20 - 10)) / 1000;
-    y = (int) (200 + 100 * (sin((float)x / 100 - add)));
-    videoBuffer[x][y] = 255;
-    t = qrand() % 500000;
-    if (t == 0)
-    {
-      t = 50 + qrand() % 50;
-      for (z = y; z < y + t; z++)
-        videoBuffer[x][z] = 255;
-    }
-  }
+  unsigned int Data[DISPLAY_WIDTH];
+  testSignal1(Data);
+  array2VideoBuffer(Data, channelA);
+  testSignal2(Data);
+  array2VideoBuffer(Data, channelB);
   countOsc();
 }
 
@@ -143,4 +124,90 @@ QSize DisplayWidget::sizeHint() const
 QSize DisplayWidget::minimumSizeHint() const
 {
   return QSize(1000, 400);
+}
+
+void DisplayWidget::array2VideoBuffer(unsigned int *data, TChannel channel)
+{
+  unsigned int color;
+  unsigned int *pointBuffer;
+  unsigned int i = 0;
+  pointBuffer = (unsigned int*)videoBuffer;
+  if (channel == channelA)
+    color = 255 * 256 * 256; //Red
+  else
+    color = 255 * 256; //Green
+
+  for (int x = 0; x < DISPLAY_WIDTH - 5; x++)
+  {
+    i = 0;
+    if (*(data + 1) == *data)
+      *(pointBuffer + *data) = color;
+    else if (*(data + 1) < *data)
+      while ((*data) - i > *(data + 1))
+      {
+        *(pointBuffer + *data - i) = color;
+        i++;
+      }
+    else
+      while ((*data) + i < *(data + 1))
+      {
+        *(pointBuffer + *data + i) = color;
+        i++;
+      }
+
+    data++;
+    pointBuffer += DISPLAY_HEIGHT;
+  }
+}
+
+void DisplayWidget::testSignal1(unsigned int *data)
+{
+  float add;
+  unsigned int y;
+  /**(data++) = 0;
+  *(data++) = 1;
+  *(data++) = 2;
+  *(data++) = 3;
+  *(data++) = 4;
+  *(data++) = 5;
+  *(data++) = 6;
+  *(data++) = 7;
+  *(data++) = 390;
+  *(data++) = 390;
+  *(data++) = 390;
+  *(data++) = 390;
+  *(data++) = 390;
+  *(data++) = 390;
+  *(data++) = 390;
+  *(data++) = 390;
+  *(data++) = 7;
+  *(data++) = 6;
+  *(data++) = 5;
+  *(data++) = 4;
+  *(data++) = 3;
+  *(data++) = 2;
+  *(data++) = 1;
+  *(data++) = 0;*/
+
+  for (int x = 0; x < DISPLAY_WIDTH; x++)
+  {
+    add += ((float)(qrand() % 20 - 10)) / 1000;
+    y = (unsigned int) (200 + 100 * (sin((float)x / 100 - 1*add)));
+    *data = y;
+    data++;
+  }
+
+}
+
+void DisplayWidget::testSignal2(unsigned int *data)
+{
+  float add;
+  unsigned int y;
+  for (int x = 0; x < DISPLAY_WIDTH; x++)
+  {
+    add += ((float)(qrand() % 20 - 10)) / 1000;
+    y = (unsigned int) (200 + 100 * (cos((float)x / 100 - add)));
+    *data = y;
+    data++;
+  }
 }

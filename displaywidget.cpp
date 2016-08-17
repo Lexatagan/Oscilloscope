@@ -29,42 +29,18 @@ void DisplayWidget::paintEvent(QPaintEvent *)
   for (int x = 0; x < DISPLAY_WIDTH; x++)
     for (int y = 0; y < DISPLAY_HEIGHT; y++)
       img->setPixel(x, y, videoBuffer[x][y]);
+  /*for (int i = 0; i < 300; i++)
+    *(img->scanLine(i) + 21) = 0xFF;*/
+  /*const char *buf = (const char*)videoBuffer;
+  img->loadFromData(buf);*/
 
   QPainter painter(this);
   painter.drawImage(QPoint(0,0), *img);
   img->~QImage();
-  //painter.drawPolygon(points, 4);
-  painter.setPen(QPen(Qt::blue, 1, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-  painter.setBrush(QBrush(Qt::green, Qt::SolidPattern));
 
-  /*painter.save();
-  painter.setPen(QPen(qrand()));
-  for (int x = 0; x < 1000; x++)
-    for (int y = 0; y < 400; y++)
-    {
-      painter.setPen(dataArray[x][y]);
-      painter.drawPoint(x, y);
-    }
-  painter.restore();*/
-  /*for (int x = 0; x < width(); x += 100)
-  {
-    for (int y = 0; y < height(); y += 100)
-    {
-      painter.save();
-      painter.translate(x, y);
-      painter.drawPolygon(points, 4);
-      painter.restore();
-    }
-  }
-*/
-  //painter.setRenderHint(QPainter::Antialiasing, false);
-  //painter.setPen(palette().dark().color());
-  //painter.setBrush(Qt::NoBrush);
-  //painter.drawRect(QRect(0, 0, width() - 1, height() - 1));
   painter.setPen(0xFFFFFF);
   painter.drawText(QPoint(921, 10), "FPS -  " + QString().setNum(fpsValue, 10));
   painter.drawText(QPoint(921, 20), "oscPS -  " + QString().setNum(oscValue, 10));
-  makeMesh();
 }
 
 void DisplayWidget::refresh()
@@ -79,8 +55,10 @@ void DisplayWidget::digiP()
     for (int y = 0; y < DISPLAY_HEIGHT; y++)
     {
       pointBuffer = (TRgb*)(&videoBuffer[x][y]);
-      pointBuffer->red = (pointBuffer->red > phosphorValue ? pointBuffer->red - phosphorValue: 0);
-      pointBuffer->green = (pointBuffer->green > phosphorValue ? pointBuffer->green - phosphorValue: 0);
+      dec(&pointBuffer->red, phosphorValue);
+      dec(&pointBuffer->green, phosphorValue);
+      //pointBuffer->red = (pointBuffer->red > phosphorValue ? pointBuffer->red - phosphorValue: 0);
+      //pointBuffer->green = (pointBuffer->green > phosphorValue ? pointBuffer->green - phosphorValue: 0);
       //pointBuffer->blue = (pointBuffer->blue > phosphorValue ? pointBuffer->blue - phosphorValue: 0);
     }
 }
@@ -140,7 +118,7 @@ void DisplayWidget::array2VideoBuffer(unsigned int *data, TChannel channel)
   else
     color = 255 * 256; //Green
 
-  for (int x = 0; x < DISPLAY_WIDTH - 1; x++)
+  /*for (int x = 0; x < DISPLAY_WIDTH - 1; x++)
   {
     i = 0;
     if (*(data + 1) == *data)
@@ -160,7 +138,36 @@ void DisplayWidget::array2VideoBuffer(unsigned int *data, TChannel channel)
 
     data++;
     pointBuffer += DISPLAY_HEIGHT;
+  }*/
+  if (channel == channelA)
+    color = 1;
+  else
+    color = 2;
+  for (int x = 0; x < DISPLAY_WIDTH - 1; x++)
+  {
+    i = 0;
+    if (*(data + 1) == *data)
+      inc((unsigned char*)(pointBuffer + *data) + color, 255);
+      //*(pointBuffer + *data) = color;
+    else if (*(data + 1) < *data)
+      while ((*data) - i > *(data + 1))
+      {
+        //*(pointBuffer + *data - i) = color;
+        inc((unsigned char*)(pointBuffer + *data - i) + color, 255);
+        i++;
+      }
+    else
+      while ((*data) + i < *(data + 1))
+      {
+        //*(pointBuffer + *data + i) = color;
+        inc((unsigned char*)(pointBuffer + *data + i) + color, 255);
+        i++;
+      }
+
+    data++;
+    pointBuffer += DISPLAY_HEIGHT;
   }
+
   countOsc();
 }
 
@@ -239,3 +246,24 @@ void DisplayWidget::makeMesh()
     }
   }
 }
+
+void DisplayWidget::inc(unsigned char *res, unsigned char a)
+{
+  /*int tmp;
+  tmp = (int) *res + a;
+  if (tmp > 255)
+    tmp = 255;
+  *res = (unsigned char) tmp;*/
+  *res = (255 - *res > a ? *res + a: 255);
+}
+
+void DisplayWidget::dec(unsigned char *res, unsigned char a)
+{
+  /*int tmp;
+  tmp = (int) *res - a;
+  if (tmp < 0)
+    tmp = 0;
+  *res = (unsigned char) tmp;*/
+  *res = (*res > a ? *res - a: 0);
+}
+

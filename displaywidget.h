@@ -45,6 +45,8 @@ private:
   int phosphorValue;
   void paintEvent(QPaintEvent *event) Q_DECL_OVERRIDE;
   void countOsc();
+  void inc(unsigned char *res, unsigned char a);
+  void dec(unsigned char *res, unsigned char a);
 
 signals:
 

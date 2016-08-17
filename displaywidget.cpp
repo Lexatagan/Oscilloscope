@@ -15,6 +15,8 @@ DisplayWidget::DisplayWidget(QWidget *parent) : QWidget(parent)
   QObject::connect(counterTimer, SIGNAL(timeout()), this, SLOT(counter()));
   counterTimer->start(1000);
 
+  makeMesh();
+
   update();
 }
 
@@ -62,6 +64,7 @@ void DisplayWidget::paintEvent(QPaintEvent *)
   painter.setPen(0xFFFFFF);
   painter.drawText(QPoint(921, 10), "FPS -  " + QString().setNum(fpsValue, 10));
   painter.drawText(QPoint(921, 20), "oscPS -  " + QString().setNum(oscValue, 10));
+  makeMesh();
 }
 
 void DisplayWidget::refresh()
@@ -99,7 +102,7 @@ void DisplayWidget::testSignal()
   array2VideoBuffer(Data, channelA);
   testSignal2(Data);
   array2VideoBuffer(Data, channelB);
-  countOsc();
+  //countOsc();
 }
 
 
@@ -118,12 +121,12 @@ void DisplayWidget::counter()
 
 QSize DisplayWidget::sizeHint() const
 {
-  return QSize(1000, 400);
+  return QSize(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 }
 
 QSize DisplayWidget::minimumSizeHint() const
 {
-  return QSize(1000, 400);
+  return QSize(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 }
 
 void DisplayWidget::array2VideoBuffer(unsigned int *data, TChannel channel)
@@ -137,7 +140,7 @@ void DisplayWidget::array2VideoBuffer(unsigned int *data, TChannel channel)
   else
     color = 255 * 256; //Green
 
-  for (int x = 0; x < DISPLAY_WIDTH - 5; x++)
+  for (int x = 0; x < DISPLAY_WIDTH - 1; x++)
   {
     i = 0;
     if (*(data + 1) == *data)
@@ -158,6 +161,7 @@ void DisplayWidget::array2VideoBuffer(unsigned int *data, TChannel channel)
     data++;
     pointBuffer += DISPLAY_HEIGHT;
   }
+  countOsc();
 }
 
 void DisplayWidget::testSignal1(unsigned int *data)
@@ -209,5 +213,29 @@ void DisplayWidget::testSignal2(unsigned int *data)
     y = (unsigned int) (200 + 100 * (cos((float)x / 100 - add)));
     *data = y;
     data++;
+  }
+}
+
+void DisplayWidget::makeMesh()
+{
+  int color = 255; //blue
+  unsigned int *pointBuffer;
+  pointBuffer = (unsigned int*)videoBuffer;
+  for (int n = 0; n < DISPLAY_WIDTH / MESH_CELL_WIDTH; n++)
+  {
+    for (int i = 0; i < DISPLAY_HEIGHT; i++)
+    {
+      *pointBuffer++ = color;
+    }
+    pointBuffer += DISPLAY_HEIGHT * MESH_CELL_WIDTH;
+  }
+  pointBuffer = (unsigned int*)videoBuffer;
+  for (int n = 0; n < DISPLAY_WIDTH; n++)
+  {
+    for (int i = 0; i < DISPLAY_HEIGHT / MESH_CELL_HEIGTH; i++)
+    {
+      *pointBuffer = color;
+      pointBuffer += MESH_CELL_HEIGTH;
+    }
   }
 }

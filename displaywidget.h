@@ -5,22 +5,26 @@
 
 #define DISPLAY_WIDTH   1000
 #define DISPLAY_HEIGHT  400
+#define MESH_CELL_WIDTH 50
+#define MESH_CELL_HEIGTH 40
 
 class DisplayWidget : public QWidget
 {
   Q_OBJECT
 private:
+
+public:
   enum TChannel{
     channelA,
     channelB
   };
 
-public:
   explicit DisplayWidget(QWidget *parent = 0);
   unsigned int videoBuffer[DISPLAY_WIDTH][DISPLAY_HEIGHT];
   int fpsValue;
   int oscValue;
   void array2VideoBuffer(unsigned int *data, TChannel channel);
+  void makeMesh();
   void testSignal1(unsigned int *data);
   void testSignal2(unsigned int *data);
   QSize sizeHint() const;

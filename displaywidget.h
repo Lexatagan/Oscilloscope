@@ -15,34 +15,39 @@ private:
 
 public:
   enum TChannel{
-    channelA,
-    channelB
+    channelA = 2,
+    channelB = 1
   };
 
   explicit DisplayWidget(QWidget *parent = 0);
-  unsigned int videoBuffer[DISPLAY_WIDTH][DISPLAY_HEIGHT];
-  int fpsValue;
-  int oscValue;
-  void array2VideoBuffer(unsigned int *data, TChannel channel);
-  void makeMesh();
-  void testSignal1(unsigned int *data);
-  void testSignal2(unsigned int *data);
   QSize sizeHint() const;
   QSize minimumSizeHint() const;
-  char getPhosphorValue();
+
+  QImage *imageBuffer;
+  uint *imageData;
+  uint fpsValue;
+  uint oscValue;
+  void scaled2VideoBuffer(unsigned int *scaledArray, TChannel channel);
+  void makeMesh();
+  /*void testSignal1(unsigned int *data);
+  void testSignal2(unsigned int *data);*/
+  char getPhosphorIncValue();
+  char getPhosphorDecValue();
 
 private:
-  struct TRgb{
+  /*struct TRgb{
     unsigned char blue;
     unsigned char green;
     unsigned char red;
-  };
+  };*/
 
+  uint yOffsetLookUpTable[DISPLAY_HEIGHT];
   QTimer *counterTimer;
   QTimer *decTimer;
   int fpsCounter;
   int oscCounter;
-  int phosphorValue;
+  int phosphorIncValue;
+  int phosphorDecValue;
   void paintEvent(QPaintEvent *event) Q_DECL_OVERRIDE;
   void countOsc();
   void inc(unsigned char *res, unsigned char a);
@@ -54,10 +59,10 @@ private slots:
   void counter();
 
 public slots:
-  void setPhosphorValue(int val);
+  void setPhosphorIncValue(int val);
+  void setPhosphorDecValue(int val);
   void refresh();
   void digiP();
-  void testSignal();
 };
 
 #endif // DISPLAYWIDGET_H

@@ -10,44 +10,52 @@ Processor::Processor(QObject *parent) : QObject(parent)
     rawSequenceA[i] = 0;
     rawSequenceB[i] = 0;
   }
-  unsigned int u = 8;
-  //u = u >> 1;
-  qDebug() << (-(signed int)u >> 1);
 }
 
-void Processor::scaleSequence(unsigned int *raw, unsigned int *scaled, int shift, unsigned int gain)
+void Processor::scaleSequence(uint *raw, uint *scaled, int shift, uint gain)
 {
-signed int tmp;
+int tmp;
   for (int i = 0; i < SEQUENCE_LENGTH; i++)
   {
-    tmp = DISPLAY_HEIGHT / 2 - shift + ((signed int)(DIRECT_BIAS - *(raw + i))) >> gain;
+    tmp = DISPLAY_HEIGHT / 2 - shift + ((DIRECT_BIAS - *((int*)raw + i)) >> gain);
     if (tmp < 0)
       tmp = 0;
     if (tmp >= DISPLAY_HEIGHT)
       tmp = DISPLAY_HEIGHT - 1;
-    *(scaled + i) = (unsigned int) tmp;
+    *(scaled + i) = (uint) tmp;
   }
 }
 
-void Processor::testSignal1(unsigned int *raw)
+void Processor::testSignalInt(uint *raw)
 {
-  float add;
+  int add = 0;
+
+  for (int x = 0; x < SEQUENCE_LENGTH; x++)
+  {
+    //add += (qrand() % 3 - 1);
+    *(raw++) = (uint) (DIRECT_BIAS * 0 + (4*x));// 100 * (sin((float)x / 100 - 1 * add)));
+  }
+}
+
+void Processor::testSignal1(uint *raw)
+{
+  float add = 0;
 
   for (int x = 0; x < SEQUENCE_LENGTH; x++)
   {
     add += ((float)(qrand() % 20 - 10)) / 1000;
-    *(raw + x) = (unsigned int) (DIRECT_BIAS + 100 * (sin((float)x / 100 - 1*add)));
+    *(raw++) = (uint) (DIRECT_BIAS + 100 * (sin((float)x / 100 - 1 * add)));
   }
 }
 
-void Processor::testSignal2(unsigned int *raw)
+void Processor::testSignal2(uint *raw)
 {
-  float add;
+  float add = 0;
 
   for (int x = 0; x < SEQUENCE_LENGTH; x++)
   {
     add += ((float)(qrand() % 20 - 10)) / 1000;
-    *(raw + x) = (unsigned int) (DIRECT_BIAS + 100 * (cos((float)x / 100 - 1*add)));
+    *(raw++) = (uint) (DIRECT_BIAS + 200 * (cos((float)x / 100 - 1 * add)));
   }
 }
 

@@ -17,7 +17,7 @@ void Processor::scaleSequence(uint *raw, uint *scaled, int shift, uint gain)
 int tmp;
   for (int i = 0; i < SEQUENCE_LENGTH; i++)
   {
-    tmp = DISPLAY_HEIGHT / 2 - shift + ((DIRECT_BIAS - *((int*)raw + i)) >> gain);
+    tmp = DISPLAY_HEIGHT / 2 + ((4096 - shift - *((int*)raw + i)) >> gain);
     if (tmp < 0)
       tmp = 0;
     if (tmp >= DISPLAY_HEIGHT)
@@ -55,7 +55,7 @@ void Processor::testSignal2(uint *raw)
   for (int x = 0; x < SEQUENCE_LENGTH; x++)
   {
     add += ((float)(qrand() % 20 - 10)) / 1000;
-    *(raw++) = (uint) (DIRECT_BIAS + 200 * (cos((float)x / 100 - 1 * add)));
+    *(raw++) = (uint) (DIRECT_BIAS + 2048 * (cos((float)x / 100 - 1 * add)));
   }
 }
 

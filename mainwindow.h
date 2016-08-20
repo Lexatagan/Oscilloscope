@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QSlider>
+#include <QtWidgets>
 #include "displayWidget.h"
 #include "processor.h"
 
@@ -26,7 +26,18 @@ private:
   DisplayWidget *displayWidget;
   QSlider *shiftASlider;
   QSlider *shiftBSlider;
-
+  QRadioButton *gainAx1RadioButton;
+  QRadioButton *gainAx2RadioButton;
+  QRadioButton *gainAx4RadioButton;
+  QRadioButton *gainAx8RadioButton;
+  QRadioButton *gainAx16RadioButton;
+  QRadioButton *gainBx1RadioButton;
+  QRadioButton *gainBx2RadioButton;
+  QRadioButton *gainBx4RadioButton;
+  QRadioButton *gainBx8RadioButton;
+  QRadioButton *gainBx16RadioButton;
+  uchar gainA;
+  uchar gainB;
   Processor *processor;
 
 public:
@@ -39,6 +50,7 @@ public:
 
 private slots:
   void tstSlot();
+  void changeGain();
 };
 
 #endif // MAINWINDOW_H

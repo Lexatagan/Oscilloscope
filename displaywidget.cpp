@@ -132,7 +132,7 @@ void DisplayWidget::makeMesh()
     {
       *pointBuffer++ = 255;
     }
-    pointBuffer += DISPLAY_WIDTH * MESH_CELL_HEIGTH;
+    pointBuffer += DISPLAY_WIDTH * (MESH_CELL_HEIGTH - 1);
   }
   pointBuffer = imageData;
   for (int n = 0; n < DISPLAY_HEIGHT; n++)                          //Vertical lines

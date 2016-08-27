@@ -3,8 +3,10 @@
 
 #include <QMainWindow>
 #include <QtWidgets>
+#include <QThread>
+#include "usbcommunicator.h"
 #include "displayWidget.h"
-#include "processor.h"
+#include "manager.h"
 
 #define SHIFT_SLIDER_STYLE_RED      "QSlider::handle{"\
                                     "border: 1px solid #999999;"\
@@ -36,21 +38,19 @@ private:
   QRadioButton *gainBx4RadioButton;
   QRadioButton *gainBx8RadioButton;
   QRadioButton *gainBx16RadioButton;
-  uchar gainA;
-  uchar gainB;
-  Processor *processor;
+  Manager *manager;
 
 public:
   MainWindow(QWidget *parent = 0);
   ~MainWindow();
 
   QWidget *container;
-  QTimer *tmr;
   QTimer *testSignalTimer;
 
 private slots:
-  void tstSlot();
   void changeGain();
+  void changeShiftA(int val);
+  void changeShiftB(int val);
 };
 
 #endif // MAINWINDOW_H

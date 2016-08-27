@@ -2,27 +2,25 @@
 #define PROCESSOR_H
 
 #include <QObject>
-#include "display.h"
+#include "displaywidget.h"
 
-#define SEQUENCE_LENGTH 1000
-#define DIRECT_BIAS     2048
+#define DIRECT_BIAS           2048
+#define DINAMIC_RANGE         4096
 
 class Processor : public QObject
 {
   Q_OBJECT
 private:
-  unsigned int rawSequenceA[SEQUENCE_LENGTH];
-  unsigned int rawSequenceB[SEQUENCE_LENGTH];
 public:
   explicit Processor(QObject *parent = 0);
-  unsigned int* getRawSequenceA();
-  unsigned int* getRawSequenceB();
-  void scaleSequence(uint *raw, uint *scaled, int shift, uint gain);
+  void scaleRaw(ushort *raw, uint length, ushort *scaled, int shift, uint gain);
   void testSignalInt(uint *raw);
   void testSignal1(uint *raw);
   void testSignal2(uint *raw);
+  void deserialize(ushort *dual, uint eachLength, ushort *channelA, ushort *channelB);
 
 signals:
+  void scaledReady(ushort*, uint, DisplayWidget::TChannel);
 
 public slots:
 };

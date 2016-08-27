@@ -16,9 +16,13 @@ SOURCES += main.cpp\
         mainwindow.cpp \
         display.cpp \
     processor.cpp \
-    displaywidget.cpp
+    displaywidget.cpp \
+    usbcommunicator.cpp \
+    manager.cpp
 
 HEADERS  += mainwindow.h \
         display.h \
     processor.h \
-    displaywidget.h
+    displaywidget.h \
+    usbcommunicator.h \
+    manager.h

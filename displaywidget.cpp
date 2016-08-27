@@ -17,9 +17,19 @@ DisplayWidget::DisplayWidget(QWidget *parent) : QWidget(parent)
 
   imageBuffer = new QImage(DISPLAY_WIDTH, DISPLAY_HEIGHT, QImage::Format_RGB32);
   imageData = (uint*)imageBuffer->scanLine(0);
-  makeMesh();
+  drawMesh();
+
+  /*---Refresh timer----------------------------------------------------------------------------*/
+  refreshTimer = new QTimer;
+  QObject::connect(refreshTimer, SIGNAL(timeout()), this, SLOT(refresh()));
+  refreshTimer->start(DEFAULT_REFRESH_DELAY);
 
   update();
+}
+
+void DisplayWidget::setRefreshDelay(uint val)
+{
+  refreshTimer->start(val);
 }
 
 void DisplayWidget::paintEvent(QPaintEvent *)
@@ -94,7 +104,7 @@ QSize DisplayWidget::minimumSizeHint() const
   return QSize(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 }
 
-void DisplayWidget::scaled2VideoBuffer(unsigned int *scaledArray, TChannel channel)
+void DisplayWidget::scaled2VideoBuffer(ushort *scaled, uint length, TChannel channel)
 {
   uint *x = imageData;
   uint *y0 = yOffsetLookUpTable;
@@ -103,34 +113,34 @@ void DisplayWidget::scaled2VideoBuffer(unsigned int *scaledArray, TChannel chann
   for (int t = 0; t < DISPLAY_WIDTH - 1; t++)
   {
     i = 0;
-    if (*(scaledArray + 1) == *scaledArray)
-      inc((uchar*)(x + *(y0 + *scaledArray)) + channel, phosphorIncValue);
-    else if (*(scaledArray + 1) < *scaledArray)
-      while (*scaledArray - i > *(scaledArray + 1))
+    if (*(scaled + 1) == *scaled)
+      inc((uchar*)(x + *(y0 + *scaled)) + channel, phosphorIncValue);
+    else if (*(scaled + 1) < *scaled)
+      while (*scaled - i > *(scaled + 1))
       {
-        inc((uchar*)(x + *(y0 + *scaledArray - i)) + channel, phosphorIncValue);
+        inc((uchar*)(x + *(y0 + *scaled - i)) + channel, phosphorIncValue);
         i++;
       }
     else
-      while (*scaledArray + i < *(scaledArray + 1))
+      while (*scaled + i < *(scaled + 1))
       {
-        inc((uchar*)(x + *(y0 + *scaledArray + i)) + channel, phosphorIncValue);
+        inc((uchar*)(x + *(y0 + *scaled + i)) + channel, phosphorIncValue);
         i++;
       }
-    scaledArray++;
+    scaled++;
     x++;
   }
   countOsc();
 }
 
-void DisplayWidget::makeMesh()
+void DisplayWidget::drawMesh()
 {
   uint *pointBuffer = imageData;
   for (int n = 0; n < DISPLAY_HEIGHT / MESH_CELL_HEIGTH; n++)       //Horizontal lines
   {
     for (int i = 0; i < DISPLAY_WIDTH; i++)
     {
-      *pointBuffer++ = 255;
+      *(pointBuffer++ + channelMesh) = 255;
     }
     pointBuffer += DISPLAY_WIDTH * (MESH_CELL_HEIGTH - 1);
   }
@@ -139,7 +149,7 @@ void DisplayWidget::makeMesh()
   {
     for (int i = 0; i < DISPLAY_WIDTH / MESH_CELL_WIDTH; i++)
     {
-      *pointBuffer = 255;
+      *(pointBuffer + channelMesh) = 255;
       pointBuffer += MESH_CELL_WIDTH;
     }
   }

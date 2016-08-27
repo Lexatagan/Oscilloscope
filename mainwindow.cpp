@@ -1,4 +1,4 @@
-//#include <QtWidgets>
+
 #include "mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
@@ -13,18 +13,21 @@ MainWindow::MainWindow(QWidget *parent)
   phosphorDecValueSlider->setMaximum(50);
   QLabel *phosphorLabel = new QLabel("digiP", this);
 
+  /*------Shift A---------------------------------------------------------------------*/
   shiftASlider = new QSlider(this);
-  shiftASlider->setMinimum(2048 - 3200);        //6400/16 = DISPLAY_HEIGTH
-  shiftASlider->setMaximum(2048 + 3200);
-  shiftASlider->setValue(2048);
+  shiftASlider->setMinimum(DIRECT_BIAS - 3200);        //6400/16 = DISPLAY_HEIGTH
+  shiftASlider->setMaximum(DIRECT_BIAS + 3200);
+  shiftASlider->setValue(DIRECT_BIAS);
   shiftASlider->setStyleSheet(SHIFT_SLIDER_STYLE_RED);
 
+  /*------Shift B---------------------------------------------------------------------*/
   shiftBSlider = new QSlider(this);
-  shiftBSlider->setMinimum(2048 - 3200);        //6400/16 = DISPLAY_HEIGTH
-  shiftBSlider->setMaximum(2048 + 3200);
-  shiftBSlider->setValue(2048);
+  shiftBSlider->setMinimum(DIRECT_BIAS - 3200);        //6400/16 = DISPLAY_HEIGTH
+  shiftBSlider->setMaximum(DIRECT_BIAS + 3200);
+  shiftBSlider->setValue(DIRECT_BIAS);
   shiftBSlider->setStyleSheet(SHIFT_SLIDER_STYLE_GREEN);
 
+  /*------Gain A----------------------------------------------------------------------*/
   QGroupBox *channelAGainGroupBox = new QGroupBox(this);
   channelAGainGroupBox->setTitle(tr("Gain A"));
   gainAx1RadioButton = new QRadioButton(tr(" x1"));
@@ -33,7 +36,7 @@ MainWindow::MainWindow(QWidget *parent)
   gainAx8RadioButton = new QRadioButton(tr(" x8"));
   gainAx16RadioButton = new QRadioButton(tr("x16"));
 
-  gainAx16RadioButton->setChecked(true);
+  gainAx1RadioButton->setChecked(true);
   QVBoxLayout *gainALayout = new QVBoxLayout;
   gainALayout->addWidget(gainAx1RadioButton);
   gainALayout->addWidget(gainAx2RadioButton);
@@ -42,6 +45,7 @@ MainWindow::MainWindow(QWidget *parent)
   gainALayout->addWidget(gainAx16RadioButton);
   channelAGainGroupBox->setLayout(gainALayout);
 
+  /*------Gain B----------------------------------------------------------------------*/
   QGroupBox *channelBGainGroupBox = new QGroupBox(this);
   channelBGainGroupBox->setTitle(tr("Gain B"));
   gainBx1RadioButton = new QRadioButton(tr(" x1"));
@@ -49,7 +53,8 @@ MainWindow::MainWindow(QWidget *parent)
   gainBx4RadioButton = new QRadioButton(tr(" x4"));
   gainBx8RadioButton = new QRadioButton(tr(" x8"));
   gainBx16RadioButton = new QRadioButton(tr("x16"));
-  gainBx16RadioButton->setChecked(true);
+  gainBx1RadioButton->setChecked(true);
+
   QVBoxLayout *gainBLayout = new QVBoxLayout;
   gainBLayout->addWidget(gainBx1RadioButton);
   gainBLayout->addWidget(gainBx2RadioButton);
@@ -58,11 +63,13 @@ MainWindow::MainWindow(QWidget *parent)
   gainBLayout->addWidget(gainBx16RadioButton);
   channelBGainGroupBox->setLayout(gainBLayout);
 
+  /*------Gain------------------------------------------------------------------------*/
   QHBoxLayout *controlsLayout = new QHBoxLayout;
   controlsLayout->addWidget(channelAGainGroupBox);
   controlsLayout->addWidget(channelBGainGroupBox);
   controlsLayout->addStretch(1);
 
+  /*------Common----------------------------------------------------------------------*/
   QGridLayout *mainLayout = new QGridLayout;
   mainLayout->addWidget(displayWidget, 0, 0, 2, 4);
   mainLayout->addWidget(phosphorLabel, 0, 5, 1, 2);
@@ -77,31 +84,34 @@ MainWindow::MainWindow(QWidget *parent)
 
   this->setGeometry(50, 50, 1120, 500);
 
-  tmr = new QTimer;
-  QObject::connect(tmr, SIGNAL(timeout()), displayWidget, SLOT(refresh()));
-  tmr->start(20);
+  QThread *usbReaderThread = new QThread;
+  USBCommunicator *communicator = new USBCommunicator();
+  communicator->moveToThread(usbReaderThread);
+  connect(usbReaderThread, SIGNAL(started()), communicator, SLOT(process()));
+  usbReaderThread->start();
+  manager = new Manager;
+  connect(communicator, SIGNAL(rawReady(ushort*,USBCommunicator::TDataStructure)), manager, SLOT(receiveRaw(ushort*,USBCommunicator::TDataStructure)));
+  connect(manager, SIGNAL(scaledReady(ushort*,uint,DisplayWidget::TChannel)), displayWidget, SLOT(scaled2VideoBuffer(ushort*,uint,DisplayWidget::TChannel)));
 
-  testSignalTimer = new QTimer;
-  QObject::connect(testSignalTimer, SIGNAL(timeout()), this, SLOT(tstSlot()));
-  testSignalTimer->start(0);
 
-  QObject::connect(phosphorIncValueSlider, SIGNAL(valueChanged(int)), displayWidget, SLOT(setPhosphorIncValue(int)));
-  QObject::connect(phosphorDecValueSlider, SIGNAL(valueChanged(int)), displayWidget, SLOT(setPhosphorDecValue(int)));
+  connect(phosphorIncValueSlider, SIGNAL(valueChanged(int)), displayWidget, SLOT(setPhosphorIncValue(int)));
+  connect(phosphorDecValueSlider, SIGNAL(valueChanged(int)), displayWidget, SLOT(setPhosphorDecValue(int)));
   phosphorIncValueSlider->setValue(255);
   phosphorDecValueSlider->setValue(25);
 
-  QObject::connect(gainAx1RadioButton, SIGNAL(released()), this, SLOT(changeGain()));
-  QObject::connect(gainAx2RadioButton, SIGNAL(released()), this, SLOT(changeGain()));
-  QObject::connect(gainAx4RadioButton, SIGNAL(released()), this, SLOT(changeGain()));
-  QObject::connect(gainAx8RadioButton, SIGNAL(released()), this, SLOT(changeGain()));
-  QObject::connect(gainAx16RadioButton, SIGNAL(released()), this, SLOT(changeGain()));
-  QObject::connect(gainBx1RadioButton, SIGNAL(released()), this, SLOT(changeGain()));
-  QObject::connect(gainBx2RadioButton, SIGNAL(released()), this, SLOT(changeGain()));
-  QObject::connect(gainBx4RadioButton, SIGNAL(released()), this, SLOT(changeGain()));
-  QObject::connect(gainBx8RadioButton, SIGNAL(released()), this, SLOT(changeGain()));
-  QObject::connect(gainBx16RadioButton, SIGNAL(released()), this, SLOT(changeGain()));
+  connect(gainAx1RadioButton, SIGNAL(released()), this, SLOT(changeGain()));
+  connect(gainAx2RadioButton, SIGNAL(released()), this, SLOT(changeGain()));
+  connect(gainAx4RadioButton, SIGNAL(released()), this, SLOT(changeGain()));
+  connect(gainAx8RadioButton, SIGNAL(released()), this, SLOT(changeGain()));
+  connect(gainAx16RadioButton, SIGNAL(released()), this, SLOT(changeGain()));
+  connect(gainBx1RadioButton, SIGNAL(released()), this, SLOT(changeGain()));
+  connect(gainBx2RadioButton, SIGNAL(released()), this, SLOT(changeGain()));
+  connect(gainBx4RadioButton, SIGNAL(released()), this, SLOT(changeGain()));
+  connect(gainBx8RadioButton, SIGNAL(released()), this, SLOT(changeGain()));
+  connect(gainBx16RadioButton, SIGNAL(released()), this, SLOT(changeGain()));
+  connect(shiftASlider, SIGNAL(valueChanged(int)), this, SLOT(changeShiftA(int)));
+  connect(shiftBSlider, SIGNAL(valueChanged(int)), this, SLOT(changeShiftB(int)));
   changeGain();
-  processor = new Processor();
 }
 
 MainWindow::~MainWindow()
@@ -109,39 +119,37 @@ MainWindow::~MainWindow()
 
 }
 
-void MainWindow::tstSlot()
-{
-  unsigned int scaled[SEQUENCE_LENGTH];
-  processor->testSignal1(processor->getRawSequenceA());
-  processor->scaleSequence(processor->getRawSequenceA(), scaled, shiftASlider->value(), gainA);
-  displayWidget->scaled2VideoBuffer(scaled, DisplayWidget::channelA);
-  processor->testSignal2(processor->getRawSequenceB());
-  processor->scaleSequence(processor->getRawSequenceB(), scaled, shiftBSlider->value(), gainB);
-  displayWidget->scaled2VideoBuffer(scaled, DisplayWidget::channelB);
-}
-
 void MainWindow::changeGain()
 {
-  qDebug() << "yeee";
   if (gainAx1RadioButton->isChecked())
-      gainA = 4;
+    manager->setGain(4, DisplayWidget::channelA);
   if (gainAx2RadioButton->isChecked())
-      gainA = 3;
+    manager->setGain(3, DisplayWidget::channelA);
   if (gainAx4RadioButton->isChecked())
-      gainA = 2;
+    manager->setGain(2, DisplayWidget::channelA);
   if (gainAx8RadioButton->isChecked())
-      gainA = 1;
+    manager->setGain(1, DisplayWidget::channelA);
   if (gainAx16RadioButton->isChecked())
-      gainA = 0;
+    manager->setGain(0, DisplayWidget::channelA);
 
   if (gainBx1RadioButton->isChecked())
-      gainB = 4;
+    manager->setGain(4, DisplayWidget::channelB);
   if (gainBx2RadioButton->isChecked())
-      gainB = 3;
+    manager->setGain(3, DisplayWidget::channelB);
   if (gainBx4RadioButton->isChecked())
-      gainB = 2;
+    manager->setGain(2, DisplayWidget::channelB);
   if (gainBx8RadioButton->isChecked())
-      gainB = 1;
+    manager->setGain(1, DisplayWidget::channelB);
   if (gainBx16RadioButton->isChecked())
-      gainB = 0;
+    manager->setGain(0, DisplayWidget::channelB);
+}
+
+void MainWindow::changeShiftA(int val)
+{
+  manager->setShift(val, DisplayWidget::channelA);
+}
+
+void MainWindow::changeShiftB(int val)
+{
+  manager->setShift(val, DisplayWidget::channelB);
 }
